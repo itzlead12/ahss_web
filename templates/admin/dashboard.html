@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHSS | Admin Dashboard</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <div>
+                <button>Menu</button>
+                <a href="{{ url_for('admin_dashboard') }}">AHSS Admin</a>
+                <div>
+                    <span>{{ session.admin_username }}</span>
+                    <a href="{{ url_for('admin_logout') }}">Logout</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div>
+        <div>
+            <!-- Sidebar -->
+            <div>
+                <div>
+                    <h5>Navigation</h5>
+                    <button>Close</button>
+                </div>
+                <div>
+                    <ul>
+                        <li>
+                            <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin_messages') }}">Messages</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main>
+                <section>
+                    <div>
+                        <h1>Dashboard Overview</h1>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div>
+                        <div>
+                            <div>
+                                <div>
+                                    <div>
+                                        <div>Messages</div>
+                                        <div>{{ messages_count }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Messages -->
+                    <div>
+                        <div>
+                            <div>
+                                <h5>Recent Messages</h5>
+                                <div>
+                                    {% if recent_messages %}
+                                        {% for message in recent_messages %}
+                                        <div>
+                                            <span>New message from: {{ message.name }}</span>
+                                            <small>{{ message.created_at }}</small>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div>
+                                            <span>No recent messages</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>
