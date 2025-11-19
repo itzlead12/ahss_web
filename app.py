@@ -3,9 +3,19 @@ from functools import wraps
 import sqlite3
 import os
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here' 
+
+# Configuration for file uploads - MUST be after app definition
+app.config['UPLOAD_FOLDER'] = 'static/uploads/schools'
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 def init_db():
     conn = sqlite3.connect('site.db')
@@ -21,17 +31,29 @@ def init_db():
                 message TEXT NOT NULL,
                 is_read BOOLEAN DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-
-    # try:
-    #     c.execute("INSERT INTO admin_users (username, password) VALUES (?, ?)", 
-    #              ('admin', 'admin123'))
-    # except sqlite3.IntegrityError:
-    #     pass  
+    
+    # Updated schools table
+    c.execute('''CREATE TABLE IF NOT EXISTS schools
+                (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL,
+                logo_filename TEXT,
+                website_link TEXT,
+                students_count INTEGER DEFAULT 0,
+                active_clubs INTEGER DEFAULT 0,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
     conn.commit()
     conn.close()
 
 init_db()
+
+def get_db_connection():
+    conn = sqlite3.connect('site.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def admin_required(f):
     @wraps(f)
@@ -41,14 +63,17 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def get_db_connection():
-    conn = sqlite3.connect('site.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
 @app.route('/')
-def index():    
-    return render_template('main/index.html')
+def index():
+    conn = get_db_connection()
+    schools = conn.execute('''
+        SELECT * FROM schools 
+        WHERE is_active = 1 
+        ORDER BY created_at DESC
+    ''').fetchall()
+    conn.close()
+    
+    return render_template('main/index.html', schools=schools)
 
 # ============ ADMIN LOGIN =========================
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -72,8 +97,145 @@ def admin_login():
     
     return render_template('admin/login.html')
 
+# ========================= SCHOOLS MANAGEMENT ==================
+
+@app.route('/admin/schools')
+@admin_required
+def admin_schools():
+    conn = get_db_connection()
+    schools = conn.execute('SELECT * FROM schools ORDER BY created_at DESC').fetchall()
+    conn.close()
+    
+    return render_template('admin/schools.html', schools=schools)
+
+@app.route('/admin/schools/new', methods=['GET', 'POST'])
+@admin_required
+def new_school():
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        website_link = request.form['website_link']
+        students_count = request.form['students_count']
+        active_clubs = request.form['active_clubs']
+        
+        # Handle file upload
+        logo_filename = None
+        if 'logo' in request.files:
+            file = request.files['logo']
+            if file and file.filename != '' and allowed_file(file.filename):
+                # Create uploads directory if it doesn't exist
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                
+                filename = secure_filename(file.filename)
+                # Create unique filename
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                filename = timestamp + filename
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                logo_filename = filename
+        
+        conn = get_db_connection()
+        conn.execute('''INSERT INTO schools (name, description, logo_filename, website_link, students_count, active_clubs) 
+                        VALUES (?, ?, ?, ?, ?, ?)''',
+                    (name, description, logo_filename, website_link, students_count, active_clubs))
+        conn.commit()
+        conn.close()
+        
+        flash('School added successfully!', 'success')
+        return redirect(url_for('admin_schools'))
+    
+    return render_template('admin/new_school.html')
+
+@app.route('/admin/schools/edit/<int:school_id>', methods=['GET', 'POST'])
+@admin_required
+def edit_school(school_id):
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        website_link = request.form['website_link']
+        students_count = request.form['students_count']
+        active_clubs = request.form['active_clubs']
+        is_active = 'is_active' in request.form
+        remove_logo = 'remove_logo' in request.form
+        
+        # Get current school data
+        current_school = conn.execute('SELECT logo_filename FROM schools WHERE id = ?', (school_id,)).fetchone()
+        
+        # Handle file upload/removal
+        logo_filename = current_school['logo_filename']
+        
+        if remove_logo and logo_filename:
+            # Remove the old logo file
+            try:
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], logo_filename))
+            except:
+                pass
+            logo_filename = None
+        
+        if 'logo' in request.files:
+            file = request.files['logo']
+            if file and file.filename != '' and allowed_file(file.filename):
+                # Create uploads directory if it doesn't exist
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                
+                # Remove old logo if exists
+                if logo_filename:
+                    try:
+                        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], logo_filename))
+                    except:
+                        pass
+                
+                # Save new logo
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                filename = timestamp + filename
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                logo_filename = filename
+        
+        conn.execute('''UPDATE schools SET 
+                        name = ?, description = ?, logo_filename = ?, website_link = ?, 
+                        students_count = ?, active_clubs = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
+                        WHERE id = ?''',
+                    (name, description, logo_filename, website_link, students_count, active_clubs, is_active, school_id))
+        conn.commit()
+        conn.close()
+        
+        flash('School updated successfully!', 'success')
+        return redirect(url_for('admin_schools'))
+    
+    school = conn.execute('SELECT * FROM schools WHERE id = ?', (school_id,)).fetchone()
+    conn.close()
+    
+    if not school:
+        flash('School not found!', 'error')
+        return redirect(url_for('admin_schools'))
+    
+    return render_template('admin/edit_school.html', school=school)
+
+@app.route('/admin/schools/delete/<int:school_id>')
+@admin_required
+def delete_school(school_id):
+    conn = get_db_connection()
+    
+    # Get school logo filename before deletion
+    school = conn.execute('SELECT logo_filename FROM schools WHERE id = ?', (school_id,)).fetchone()
+    
+    # Delete the logo file if exists
+    if school and school['logo_filename']:
+        try:
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], school['logo_filename']))
+        except:
+            pass
+    
+    conn.execute('DELETE FROM schools WHERE id = ?', (school_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('School deleted successfully!', 'success')
+    return redirect(url_for('admin_schools'))
+
 # ========================= CONTACT MANAGEMENT ===========================================
-# Contact Management Routes
 @app.route('/contact', methods=['POST'])
 def contact_submit():
     if request.method == 'POST':
@@ -105,7 +267,6 @@ def admin_messages():
     unread_messages = sum(1 for m in messages if not m['is_read'])
     read_messages = total_messages - unread_messages
     
-    from datetime import datetime
     today = datetime.now().strftime('%Y-%m-%d')
     today_messages = sum(1 for m in messages if m['created_at'].startswith(today))
     
@@ -173,7 +334,6 @@ def mark_message_unread(message_id):
     flash('Message marked as unread!', 'success')
     return redirect(url_for('admin_messages'))
 
-
 # ========================= ADMIN DASHBOARD ==================
 
 @app.route('/admin/dashboard')
@@ -181,8 +341,9 @@ def mark_message_unread(message_id):
 def admin_dashboard():
     conn = get_db_connection()
     
-    # Get messages count
+    # Get counts
     messages_count = conn.execute('SELECT COUNT(*) FROM contact_messages').fetchone()[0]
+    schools_count = conn.execute('SELECT COUNT(*) FROM schools').fetchone()[0]
     
     # Get recent messages (last 5)
     recent_messages = conn.execute('''
@@ -195,6 +356,7 @@ def admin_dashboard():
     
     return render_template('admin/dashboard.html', 
                          messages_count=messages_count,
+                         schools_count=schools_count,
                          recent_messages=recent_messages)
 
 # ========================= LOGOUT ==================
@@ -204,7 +366,7 @@ def admin_logout():
     flash('Logged out successfully!', 'success')
     return redirect(url_for('admin_login'))
 
-
-#
 if __name__ == '__main__':
+    # Create uploads directory if it doesn't exist
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     app.run(debug=True)

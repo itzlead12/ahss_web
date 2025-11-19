@@ -145,107 +145,56 @@
     </section><!-- /About Section -->
 
     <!-- Schools Section -->
-    <section id="schools" class="services section">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
+<section id="schools" class="services section">
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
         <h2>Schools</h2>
         <div><span>Schools that are working with</span> <span class="description-title">us</span></div>
-      </div><!-- End Section Title -->
+    </div><!-- End Section Title -->
 
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
         <div class="row justify-content-center">
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
-            <div class="service-card position-relative z-1">
-              <div class="service-icon">
-                <i class="bi bi-building"></i>
-              </div>
-              <h3>
-                Addis Ababa High School
-              </h3>
-              <p>
-                Leading robotics and coding programs with state-of-the-art laboratories and dedicated faculty mentors.
-              </p>
-              <div class="school-stats">
-                <span><strong>200+</strong> Students</span>
-                <span><strong>5</strong> Active Clubs</span>
-              </div>
+            {% for school in schools %}
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                <div class="service-card position-relative z-1">
+                    <div class="service-icon">
+                        {% if school.logo_filename %}
+                            <img src="{{ url_for('static', filename='uploads/schools/' + school.logo_filename) }}" 
+                                 alt="{{ school.name }} logo" 
+                                 style="max-width: 100px; max-height: 60px; object-fit: contain;">
+                        {% else %}
+                            <i class="bi bi-building"></i>
+                        {% endif %}
+                    </div>
+                    <h3>
+                        {% if school.website_link %}
+                            <a href="{{ school.website_link }}" target="_blank" style="color: inherit; text-decoration: none;">
+                                {{ school.name }}
+                            </a>
+                        {% else %}
+                            {{ school.name }}
+                        {% endif %}
+                    </h3>
+                    <p>
+                        {{ school.description }}
+                    </p>
+                    <div class="school-stats">
+                        <span><strong>{{ school.students_count }}+</strong> Students</span>
+                        <span><strong>{{ school.active_clubs }}</strong> Active Clubs</span>
+                    </div>
+                    {% if school.website_link %}
+                    <div style="margin-top: 15px;">
+                        <a href="{{ school.website_link }}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500;">
+                            Visit School Website →
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-          </div>
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-            <div class="service-card position-relative z-1">
-              <div class="service-icon">
-                <i class="bi bi-building"></i>
-              </div>
-              <h3>
-                Ethiopian Science Academy
-              </h3>
-              <p>
-                Specialized in environmental science and astronomy with advanced research facilities and telescope access.
-              </p>
-              <div class="school-stats">
-                <span><strong>150+</strong> Students</span>
-                <span><strong>4</strong> Active Clubs</span>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-            <div class="service-card position-relative z-1">
-              <div class="service-icon">
-                <i class="bi bi-building"></i>
-              </div>
-              <h3>
-                Future Leaders STEM School
-              </h3>
-              <p>
-                Focused on electronics and engineering with hands-on project-based learning and industry partnerships.
-              </p>
-              <div class="school-stats">
-                <span><strong>180+</strong> Students</span>
-                <span><strong>6</strong> Active Clubs</span>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
-            <div class="service-card position-relative z-1">
-              <div class="service-icon">
-                <i class="bi bi-building"></i>
-              </div>
-              <h3>
-                Innovation High School
-              </h3>
-              <p>
-                Strong coding and app development programs with regular hackathons and coding competitions.
-              </p>
-              <div class="school-stats">
-                <span><strong>220+</strong> Students</span>
-                <span><strong>5</strong> Active Clubs</span>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-            <div class="service-card position-relative z-1">
-              <div class="service-icon">
-                <i class="bi bi-building"></i>
-              </div>
-              <h3>
-                Pioneer Science School
-              </h3>
-              <p>
-                Comprehensive science research programs with partnerships with local universities and research institutes.
-              </p>
-              <div class="school-stats">
-                <span><strong>170+</strong> Students</span>
-                <span><strong>4</strong> Active Clubs</span>
-              </div>
-            </div>
-          </div>
+            {% endfor %}
         </div>
-
-      </div>
-
-    </section><!-- /Schools Section -->
-
+    </div>
+</section><!-- /Schools Section -->
     <!-- Events Section -->
     <section id="events" class="steps section">
 

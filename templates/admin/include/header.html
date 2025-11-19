@@ -1,0 +1,20 @@
+<header class="bg-gray-800 text-white shadow-md">
+    <nav class="container mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button class="lg:hidden text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <a href="{{ url_for('admin_dashboard') }}" class="text-xl font-bold">AHSS Admin</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm">Welcome, {{ session.admin_username }}</span>
+                <a href="{{ url_for('admin_logout') }}" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition duration-200">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+</header>
