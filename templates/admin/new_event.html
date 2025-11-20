@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHSS | Add New Event</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    {% include 'admin/include/header.html' %}
+
+    <div class="flex">
+        {% include 'admin/include/sidebar.html' %}
+        
+        <main class="lg:ml-64 flex-1 p-6">
+            <div class="max-w-4xl mx-auto">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800">Add New Event</h1>
+                    <a href="{{ url_for('admin_events') }}" 
+                       class="text-gray-600 hover:text-gray-800 font-medium">
+                        ← Back to Events
+                    </a>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="mb-6 p-4 rounded-lg {% if category == 'error' %}bg-red-100 border border-red-400 text-red-700{% else %}bg-green-100 border border-green-400 text-green-700{% endif %}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Event Form -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Event Title *</label>
+                            <input type="text" id="title" name="title" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                            <textarea id="description" name="description" rows="4" required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Describe the event..."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="event_date" class="block text-sm font-medium text-gray-700 mb-2">Event Date *</label>
+                                <input type="date" id="event_date" name="event_date" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label for="event_type" class="block text-sm font-medium text-gray-700 mb-2">Event Type *</label>
+                                <select id="event_type" name="event_type" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="upcoming">Upcoming Event</option>
+                                    <option value="past">Past Event</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="registration_link" class="block text-sm font-medium text-gray-700 mb-2">Registration Link</label>
+                                <input type="url" id="registration_link" name="registration_link" placeholder="https://example.com/register"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label for="gallery_link" class="block text-sm font-medium text-gray-700 mb-2">Gallery Link</label>
+                                <input type="url" id="gallery_link" name="gallery_link" placeholder="https://example.com/gallery"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="event_images" class="block text-sm font-medium text-gray-700 mb-2">Event Images</label>
+                            <input type="file" id="event_images" name="event_images" multiple accept=".png,.jpg,.jpeg,.gif,.webp"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-1">You can select multiple images. Allowed formats: PNG, JPG, JPEG, GIF, WEBP (Max: 2MB per file)</p>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-4 pt-6">
+                            <a href="{{ url_for('admin_events') }}" 
+                               class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-200">
+                                Cancel
+                            </a>
+                            <button type="submit" 
+                                    class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200">
+                                Add Event
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

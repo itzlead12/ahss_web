@@ -8,10 +8,10 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here' 
 
-# Configuration for file uploads - MUST be after app definition
 app.config['UPLOAD_FOLDER'] = 'static/uploads/schools'
-app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
-app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+app.config['UPLOAD_FOLDER_EVENTS'] = 'static/uploads/events'
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg','webp'}
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -32,18 +32,28 @@ def init_db():
                 is_read BOOLEAN DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
-    # Updated schools table
     c.execute('''CREATE TABLE IF NOT EXISTS schools
                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 description TEXT NOT NULL,
                 logo_filename TEXT,
                 website_link TEXT,
-                students_count INTEGER DEFAULT 0,
-                active_clubs INTEGER DEFAULT 0,
                 is_active BOOLEAN DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS events
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            event_date DATE NOT NULL,
+            event_type TEXT NOT NULL, -- 'upcoming' or 'past'
+            registration_link TEXT,
+            gallery_link TEXT,
+            image_filenames TEXT, -- JSON string of uploaded image filenames
+            is_active BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
     conn.commit()
     conn.close()
@@ -71,10 +81,29 @@ def index():
         WHERE is_active = 1 
         ORDER BY created_at DESC
     ''').fetchall()
+    
+    events = conn.execute('''
+        SELECT * FROM events 
+        WHERE is_active = 1 
+        ORDER BY event_date DESC
+    ''').fetchall()
     conn.close()
     
-    return render_template('main/index.html', schools=schools)
-
+    # Process events for the template
+    processed_events = []
+    for event in events:
+        event_dict = dict(event)
+        if event_dict['image_filenames'] and event_dict['image_filenames'] != '[]':
+            try:
+                filenames_str = event_dict['image_filenames'].strip('[]').replace("'", "").replace('"', '')
+                event_dict['processed_images'] = [f.strip() for f in filenames_str.split(',') if f.strip()]
+            except:
+                event_dict['processed_images'] = []
+        else:
+            event_dict['processed_images'] = []
+        processed_events.append(event_dict)
+    
+    return render_template('main/index.html', schools=schools, events=processed_events)
 # ============ ADMIN LOGIN =========================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -115,8 +144,6 @@ def new_school():
         name = request.form['name']
         description = request.form['description']
         website_link = request.form['website_link']
-        students_count = request.form['students_count']
-        active_clubs = request.form['active_clubs']
         
         # Handle file upload
         logo_filename = None
@@ -134,9 +161,9 @@ def new_school():
                 logo_filename = filename
         
         conn = get_db_connection()
-        conn.execute('''INSERT INTO schools (name, description, logo_filename, website_link, students_count, active_clubs) 
+        conn.execute('''INSERT INTO schools (name, description, logo_filename, website_link) 
                         VALUES (?, ?, ?, ?, ?, ?)''',
-                    (name, description, logo_filename, website_link, students_count, active_clubs))
+                    (name, description, logo_filename, website_link))
         conn.commit()
         conn.close()
         
@@ -154,8 +181,6 @@ def edit_school(school_id):
         name = request.form['name']
         description = request.form['description']
         website_link = request.form['website_link']
-        students_count = request.form['students_count']
-        active_clubs = request.form['active_clubs']
         is_active = 'is_active' in request.form
         remove_logo = 'remove_logo' in request.form
         
@@ -195,9 +220,9 @@ def edit_school(school_id):
         
         conn.execute('''UPDATE schools SET 
                         name = ?, description = ?, logo_filename = ?, website_link = ?, 
-                        students_count = ?, active_clubs = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
+                        is_active = ?, updated_at = CURRENT_TIMESTAMP 
                         WHERE id = ?''',
-                    (name, description, logo_filename, website_link, students_count, active_clubs, is_active, school_id))
+                    (name, description, logo_filename, website_link, is_active, school_id))
         conn.commit()
         conn.close()
         
@@ -234,6 +259,179 @@ def delete_school(school_id):
     
     flash('School deleted successfully!', 'success')
     return redirect(url_for('admin_schools'))
+
+# ========================= EVENTS MANAGEMENT ==================
+
+@app.route('/admin/events')
+@admin_required
+def admin_events():
+    conn = get_db_connection()
+    events = conn.execute('SELECT * FROM events ORDER BY event_date DESC').fetchall()
+    conn.close()
+    
+    # Process image filenames for the template
+    processed_events = []
+    for event in events:
+        event_dict = dict(event)
+        # Safely parse the image_filenames string
+        if event_dict['image_filenames'] and event_dict['image_filenames'] != '[]':
+            try:
+                # Remove brackets and quotes, then split
+                filenames_str = event_dict['image_filenames'].strip('[]').replace("'", "").replace('"', '')
+                image_filenames = [f.strip() for f in filenames_str.split(',') if f.strip()]
+                event_dict['image_count'] = len(image_filenames)
+            except:
+                event_dict['image_count'] = 0
+        else:
+            event_dict['image_count'] = 0
+        processed_events.append(event_dict)
+    
+    return render_template('admin/events.html', events=processed_events)
+
+@app.route('/admin/events/new', methods=['GET', 'POST'])
+@admin_required
+def new_event():  # THIS WAS MISSING!
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        event_date = request.form['event_date']
+        event_type = request.form['event_type']
+        registration_link = request.form['registration_link']
+        gallery_link = request.form['gallery_link']
+        
+        # Handle multiple file uploads
+        image_filenames = []
+        if 'event_images' in request.files:
+            files = request.files.getlist('event_images')
+            for file in files:
+                if file and file.filename != '' and allowed_file(file.filename):
+                    # Create uploads directory if it doesn't exist
+                    os.makedirs(app.config['UPLOAD_FOLDER_EVENTS'], exist_ok=True)
+                    
+                    filename = secure_filename(file.filename)
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                    filename = timestamp + filename
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER_EVENTS'], filename))
+                    image_filenames.append(filename)
+        
+        conn = get_db_connection()
+        conn.execute('''INSERT INTO events (title, description, event_date, event_type, registration_link, gallery_link, image_filenames) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                    (title, description, event_date, event_type, registration_link, gallery_link, str(image_filenames)))
+        conn.commit()
+        conn.close()
+        
+        flash('Event added successfully!', 'success')
+        return redirect(url_for('admin_events'))
+    
+    return render_template('admin/new_event.html')
+
+@app.route('/admin/events/edit/<int:event_id>', methods=['GET', 'POST'])
+@admin_required
+def edit_event(event_id):
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        event_date = request.form['event_date']
+        event_type = request.form['event_type']
+        registration_link = request.form['registration_link']
+        gallery_link = request.form['gallery_link']
+        is_active = 'is_active' in request.form
+        remove_images = request.form.getlist('remove_images')
+        
+        # Get current event data
+        current_event = conn.execute('SELECT image_filenames FROM events WHERE id = ?', (event_id,)).fetchone()
+        
+        # Handle image removal and new uploads
+        current_images = []
+        if current_event['image_filenames'] and current_event['image_filenames'] != '[]':
+            try:
+                filenames_str = current_event['image_filenames'].strip('[]').replace("'", "").replace('"', '')
+                current_images = [f.strip() for f in filenames_str.split(',') if f.strip()]
+            except:
+                current_images = []
+        
+        # Remove selected images
+        if remove_images:
+            for filename in remove_images:
+                if filename in current_images:
+                    try:
+                        os.remove(os.path.join(app.config['UPLOAD_FOLDER_EVENTS'], filename))
+                    except:
+                        pass
+                    current_images.remove(filename)
+        
+        # Handle new file uploads
+        if 'event_images' in request.files:
+            files = request.files.getlist('event_images')
+            for file in files:
+                if file and file.filename != '' and allowed_file(file.filename):
+                    os.makedirs(app.config['UPLOAD_FOLDER_EVENTS'], exist_ok=True)
+                    
+                    filename = secure_filename(file.filename)
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                    filename = timestamp + filename
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER_EVENTS'], filename))
+                    current_images.append(filename)
+        
+        conn.execute('''UPDATE events SET 
+                        title = ?, description = ?, event_date = ?, event_type = ?, 
+                        registration_link = ?, gallery_link = ?, image_filenames = ?, 
+                        is_active = ?, updated_at = CURRENT_TIMESTAMP 
+                        WHERE id = ?''',
+                    (title, description, event_date, event_type, registration_link, 
+                     gallery_link, str(current_images), is_active, event_id))
+        conn.commit()
+        conn.close()
+        
+        flash('Event updated successfully!', 'success')
+        return redirect(url_for('admin_events'))
+    
+    event = conn.execute('SELECT * FROM events WHERE id = ?', (event_id,)).fetchone()
+    conn.close()
+    
+    if not event:
+        flash('Event not found!', 'error')
+        return redirect(url_for('admin_events'))
+    
+    # Process image filenames for the template
+    event_dict = dict(event)
+    if event_dict['image_filenames'] and event_dict['image_filenames'] != '[]':
+        try:
+            filenames_str = event_dict['image_filenames'].strip('[]').replace("'", "").replace('"', '')
+            event_dict['processed_images'] = [f.strip() for f in filenames_str.split(',') if f.strip()]
+        except:
+            event_dict['processed_images'] = []
+    else:
+        event_dict['processed_images'] = []
+    
+    return render_template('admin/edit_event.html', event=event_dict)
+
+@app.route('/admin/events/delete/<int:event_id>')
+@admin_required
+def delete_event(event_id):
+    conn = get_db_connection()
+    
+    # Get event images before deletion
+    event = conn.execute('SELECT image_filenames FROM events WHERE id = ?', (event_id,)).fetchone()
+    
+    # Delete the image files if they exist
+    if event and event['image_filenames']:
+        image_filenames = eval(event['image_filenames'])
+        for filename in image_filenames:
+            try:
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER_EVENTS'], filename))
+            except:
+                pass
+    
+    conn.execute('DELETE FROM events WHERE id = ?', (event_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Event deleted successfully!', 'success')
+    return redirect(url_for('admin_events'))
 
 # ========================= CONTACT MANAGEMENT ===========================================
 @app.route('/contact', methods=['POST'])
@@ -367,6 +565,7 @@ def admin_logout():
     return redirect(url_for('admin_login'))
 
 if __name__ == '__main__':
-    # Create uploads directory if it doesn't exist
+    
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    os.makedirs(app.config['UPLOAD_FOLDER_EVENTS'], exist_ok=True)
     app.run(debug=True)
