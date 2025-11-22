@@ -33,7 +33,7 @@
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
 
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+      <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
         <img src="/static/img/logo.webp" alt="">
         <h1 class="sitename">AHSS</h1>
       </a>
@@ -200,6 +200,118 @@
     </div><!-- End Section Title -->
 
     <div class="container" data-aos="fade-up" data-aos-delay="100">
+        <style>
+            .event-gallery {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 12px;
+                margin: 15px 0;
+            }
+            
+            .event-img {
+                width: 100%;
+                height: 120px;
+                object-fit: cover;
+                border-radius: 0;
+                transition: all 0.3s ease;
+            }
+            
+            .event-img:hover {
+                transform: scale(1.05);
+            }
+            
+            .event-actions {
+                margin-top: 15px;
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                padding: 8px 16px;
+                border-radius: 0;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                font-size: 14px;
+                border: 1px solid #fff;
+                color: #fff;
+                background: transparent;
+            }
+            
+            .btn:hover {
+                background: #fff;
+                color: #000;
+                transform: translateY(-2px);
+            }
+            
+            /* Transparent design with white text */
+            .step-item .step-content {
+                background: transparent !important;
+                border: none;
+                border-radius: 0;
+                padding: 20px;
+                margin: 10px 0;
+                color: #fff;
+            }
+            
+            .step-info h3 {
+                color: #fff;
+                margin: 10px 0;
+            }
+            
+            .step-info p {
+                color: rgba(255, 255, 255, 0.8);
+            }
+            
+            .step-number {
+                color: #fff !important;
+                font-weight: 600;
+                opacity: 0.9;
+            }
+            
+            .step-icon {
+                background: transparent !important;
+                border: 1px solid #fff;
+                border-radius: 0;
+                color: #fff;
+            }
+            
+            /* Image grid */
+            .image-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 8px;
+                margin: 12px 0;
+            }
+            
+            .grid-image {
+                width: 100%;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 0;
+                transition: all 0.3s ease;
+            }
+            
+            .grid-image:hover {
+                transform: scale(1.08);
+            }
+            
+            .more-images {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 0;
+                font-size: 12px;
+                font-weight: 600;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+        </style>
+
         <div class="steps-wrapper">
             {% for event in events %}
             <div class="step-item {% if event.event_type == 'past' %}past-event{% endif %}" 
@@ -214,26 +326,50 @@
                         {% endif %}
                     </div>
                     <div class="step-info">
-                        <span class="step-number {% if event.event_type == 'past' %}past{% endif %}">
-                            {% if event.event_type == 'past' %}Completed - {% endif %}{{ event.event_date }}
+                        <span class="step-number">
+                            {% if event.event_type == 'past' %}
+                                <i class="bi bi-check-circle-fill"></i> Completed - {{ event.event_date }}
+                            {% else %}
+                                <i class="bi bi-clock-fill"></i> {{ event.event_date }}
+                            {% endif %}
                         </span>
                         <h3>{{ event.title }}</h3>
                         <p>{{ event.description }}</p>
                         
-                        {% if event.event_type == 'past' and event.processed_images %}
+                        <!-- Show images for BOTH upcoming and past events -->
+                        {% if event.processed_images and event.processed_images|length > 0 %}
                         <div class="event-gallery">
-                            {% for filename in event.processed_images[:2] %}
-                            <img src="{{ url_for('static', filename='uploads/events/' + filename) }}" 
-                                 alt="{{ event.title }}" class="event-img">
+                            {% for filename in event.processed_images %}
+                                {% if loop.index <= 4 %}
+                                <img src="{{ url_for('static', filename='uploads/events/' + filename) }}" 
+                                     alt="{{ event.title }} - Image {{ loop.index }}" 
+                                     class="event-img"
+                                     title="{{ event.title }}">
+                                {% endif %}
                             {% endfor %}
+                            
+                            <!-- Show "more" indicator if there are more than 4 images -->
+                            {% if event.processed_images|length > 4 %}
+                            <div class="event-img more-images" title="+{{ event.processed_images|length - 4 }} more images">
+                                +{{ event.processed_images|length - 4 }}
+                            </div>
+                            {% endif %}
                         </div>
                         {% endif %}
                         
                         <div class="event-actions">
                             {% if event.event_type == 'upcoming' and event.registration_link %}
-                                <a href="{{ event.registration_link }}" class="btn btn-primary">Register Now</a>
-                            {% elif event.event_type == 'past' and event.gallery_link %}
-                                <a href="{{ event.gallery_link }}" class="btn btn-outline">View Gallery</a>
+                                <a href="{{ event.registration_link }}" target="_blank" class="btn">
+                                    <i class="bi bi-pencil-square"></i> Register Now
+                                </a>
+                            {% endif %}
+                            
+                            {% if event.processed_images and event.processed_images|length > 0 %}
+                                <button type="button" class="btn view-gallery-btn" 
+                                        data-event-title="{{ event.title }}" 
+                                        data-images='{{ event.processed_images | tojson }}'>
+                                    <i class="bi bi-images"></i> View Gallery
+                                </button>
                             {% endif %}
                         </div>
                     </div>
@@ -242,90 +378,112 @@
             {% endfor %}
         </div>
     </div>
-</section><!-- /Events Section -->  
+</section><!-- /Events Section -->
 
+<!-- Transparent Gallery Modal -->
+<div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dark">
+        <div class="modal-content" style="background: rgba(0, 0, 0, 0.9); border: none; color: #fff;">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                <h5 class="modal-title" id="galleryModalLabel" style="color: #fff;">Event Gallery</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner" id="carousel-inner">
+                        <!-- Images will be inserted here by JavaScript -->
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const viewGalleryButtons = document.querySelectorAll('.view-gallery-btn');
+    const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
+    const carouselInner = document.getElementById('carousel-inner');
+    const galleryModalLabel = document.getElementById('galleryModalLabel');
+    
+    viewGalleryButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const eventTitle = this.getAttribute('data-event-title');
+            const images = JSON.parse(this.getAttribute('data-images'));
+            
+            // Update modal title
+            galleryModalLabel.textContent = eventTitle + ' - Gallery';
+            
+            // Clear previous carousel items
+            carouselInner.innerHTML = '';
+            
+            // Add new carousel items
+            images.forEach((image, index) => {
+                const carouselItem = document.createElement('div');
+                carouselItem.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+                carouselItem.innerHTML = `
+                    <img src="/static/uploads/events/${image}" 
+                         class="d-block w-100" 
+                         alt="${eventTitle} - Image ${index + 1}"
+                         style="max-height: 500px; object-fit: contain;">
+                    <div class="carousel-caption d-none d-md-block">
+                        <p>Image ${index + 1} of ${images.length}</p>
+                    </div>
+                `;
+                carouselInner.appendChild(carouselItem);
+            });
+            
+            // Show the modal
+            galleryModal.show();
+        });
+    });
+});
+</script>
     <!-- Team Section -->
-    <section id="team" class="team section light-background">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
+<section id="team" class="team section light-background">
+    <!-- Section Title -->
+    <div class="container section-title" data-aos="fade-up">
         <h2>Team</h2>
         <div><span>Our</span> <span class="description-title">Leadership</span></div>
-      </div><!-- End Section Title -->
+    </div><!-- End Section Title -->
 
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
         <div class="row gy-4">
-
-          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
-            <div class="team-member d-flex">
-              <div class="member-img">
-                <img src="/static/img/team/president.webp" class="img-fluid" alt="Society President" loading="lazy">
-              </div>
-              <div class="member-info flex-grow-1">
-                <h4>Samuel Bekele</h4>
-                <span>Society President</span>
-                <p>Leads the overall direction of the society and represents us in external events and partnerships.</p>
-                <div class="social">
-                  <a href=""><i class="bi bi-envelope"></i></a>
+            {% for member in team_members %}
+            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                <div class="team-member d-flex">
+                    <div class="member-img">
+                        {% if member.image_filename %}
+                        <img src="{{ url_for('static', filename='uploads/team/' + member.image_filename) }}" 
+                             class="img-fluid" alt="{{ member.name }}" loading="lazy">
+                        {% else %}
+                        <img src="/static/img/team/placeholder.webp" 
+                             class="img-fluid" alt="{{ member.name }}" loading="lazy">
+                        {% endif %}
+                    </div>
+                    <div class="member-info flex-grow-1">
+                        <h4>{{ member.name }}</h4>
+                        <span>{{ member.position }}</span>
+                        <p>{{ member.description }}</p>
+                    </div>
                 </div>
-              </div>
+            </div><!-- End Team Member -->
+            {% else %}
+            <div class="col-12 text-center">
+                <p>No team members added yet.</p>
             </div>
-          </div><!-- End Team Member -->
-
-          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
-            <div class="team-member d-flex">
-              <div class="member-img">
-                <img src="/static/img/team/vice-president.webp" class="img-fluid" alt="Vice President" loading="lazy">
-              </div>
-              <div class="member-info flex-grow-1">
-                <h4>Liya Tadesse</h4>
-                <span>Vice President</span>
-                <p>Coordinates between clubs and ensures smooth operation of all society activities and events.</p>
-                <div class="social">
-                  <a href=""><i class="bi bi-envelope"></i></a>
-                </div>
-              </div>
-            </div>
-          </div><!-- End Team Member -->
-
-          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
-            <div class="team-member d-flex">
-              <div class="member-img">
-                <img src="/static/img/team/robotics-coordinator.webp" class="img-fluid" alt="Robotics Coordinator" loading="lazy">
-              </div>
-              <div class="member-info flex-grow-1">
-                <h4>Daniel Haile</h4>
-                <span>Robotics Club Coordinator</span>
-                <p>Leads the robotics club activities, competitions, and project development.</p>
-                <div class="social">
-                  <a href=""><i class="bi bi-envelope"></i></a>
-                </div>
-              </div>
-            </div>
-          </div><!-- End Team Member -->
-
-          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="400">
-            <div class="team-member d-flex">
-              <div class="member-img">
-                <img src="/static/img/team/coding-coordinator.webp" class="img-fluid" alt="Coding Coordinator" loading="lazy">
-              </div>
-              <div class="member-info flex-grow-1">
-                <h4>Marta Girma</h4>
-                <span>Coding Club Coordinator</span>
-                <p>Oversees coding workshops, hackathons, and software development projects.</p>
-                <div class="social">
-                  <a href=""><i class="bi bi-envelope"></i></a>
-                </div>
-              </div>
-            </div>
-          </div><!-- End Team Member -->
-
+            {% endfor %}
         </div>
-
-      </div>
-
-    </section><!-- /Team Section -->
+    </div>
+</section><!-- /Team Section -->
 
 <!-- Contact Section -->
 <!-- Contact Section -->
@@ -415,10 +573,9 @@
           </a>
           <p>Addis Highschool Science Society unites science and technology clubs to foster innovation, collaboration, and scientific excellence across Ethiopia.</p>
           <div class="social-links d-flex mt-4">
-            <a href=""><i class="bi bi-facebook"></i></a>
+            <a href=""><i class="bi bi-instagram"></i></a>
             <a href=""><i class="bi bi-telegram"></i></a>
             <a href=""><i class="bi bi-youtube"></i></a>
-            <a href=""><i class="bi bi-twitter-x"></i></a>
             <a href=""><i class="bi bi-tiktok"></i></a>
           </div>
         </div>

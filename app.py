@@ -49,8 +49,19 @@ def init_db():
             event_date DATE NOT NULL,
             event_type TEXT NOT NULL, -- 'upcoming' or 'past'
             registration_link TEXT,
-            gallery_link TEXT,
             image_filenames TEXT, -- JSON string of uploaded image filenames
+            is_active BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS team_members
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            position TEXT NOT NULL,
+            description TEXT NOT NULL,
+            image_filename TEXT,
+            social_links TEXT, -- JSON string for multiple social links
+            display_order INTEGER DEFAULT 0,
             is_active BOOLEAN DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
@@ -87,6 +98,13 @@ def index():
         WHERE is_active = 1 
         ORDER BY event_date DESC
     ''').fetchall()
+    
+    team_members = conn.execute('''
+        SELECT * FROM team_members 
+        WHERE is_active = 1 
+        ORDER BY display_order ASC, created_at DESC
+    ''').fetchall()
+    
     conn.close()
     
     # Process events for the template
@@ -103,7 +121,10 @@ def index():
             event_dict['processed_images'] = []
         processed_events.append(event_dict)
     
-    return render_template('main/index.html', schools=schools, events=processed_events)
+    return render_template('main/index.html', 
+                         schools=schools, 
+                         events=processed_events,
+                         team_members=team_members)
 # ============ ADMIN LOGIN =========================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -162,7 +183,7 @@ def new_school():
         
         conn = get_db_connection()
         conn.execute('''INSERT INTO schools (name, description, logo_filename, website_link) 
-                        VALUES (?, ?, ?, ?, ?, ?)''',
+                        VALUES (?, ?, ?, ?)''', 
                     (name, description, logo_filename, website_link))
         conn.commit()
         conn.close()
@@ -171,6 +192,7 @@ def new_school():
         return redirect(url_for('admin_schools'))
     
     return render_template('admin/new_school.html')
+
 
 @app.route('/admin/schools/edit/<int:school_id>', methods=['GET', 'POST'])
 @admin_required
@@ -260,6 +282,192 @@ def delete_school(school_id):
     flash('School deleted successfully!', 'success')
     return redirect(url_for('admin_schools'))
 
+@app.route('/admin/schools/toggle-status/<int:school_id>', methods=['POST'])
+@admin_required
+def toggle_school_status(school_id):
+    conn = get_db_connection()
+    
+    # Get current school status
+    school = conn.execute('SELECT name, is_active FROM schools WHERE id = ?', (school_id,)).fetchone()
+    
+    if not school:
+        flash('School not found!', 'error')
+        return redirect(url_for('admin_schools'))
+    
+    # Toggle the status
+    new_status = not school['is_active']
+    
+    conn.execute('UPDATE schools SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                (new_status, school_id))
+    conn.commit()
+    conn.close()
+    
+    status_text = "activated" if new_status else "deactivated"
+    flash(f"School '{school['name']}' has been {status_text}!", 'success')
+    return redirect(url_for('admin_schools'))
+
+
+# ========================= TEAM MANAGEMENT ==================
+
+@app.route('/admin/team')
+@admin_required
+def admin_team():
+    conn = get_db_connection()
+    team_members = conn.execute('''
+        SELECT * FROM team_members 
+        ORDER BY display_order ASC, created_at DESC
+    ''').fetchall()
+    conn.close()
+    
+    return render_template('admin/team.html', team_members=team_members)
+
+@app.route('/admin/team/new', methods=['GET', 'POST'])
+@admin_required
+def new_team_member():
+    if request.method == 'POST':
+        name = request.form['name']
+        position = request.form['position']
+        description = request.form['description']
+        display_order = request.form.get('display_order', 0)
+        
+        # Handle file upload
+        image_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '' and allowed_file(file.filename):
+                os.makedirs('static/uploads/team', exist_ok=True)
+                
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                filename = timestamp + filename
+                file.save(os.path.join('static/uploads/team', filename))
+                image_filename = filename
+        
+        conn = get_db_connection()
+        conn.execute('''INSERT INTO team_members 
+                        (name, position, description, image_filename, display_order) 
+                        VALUES (?, ?, ?, ?, ?)''',
+                    (name, position, description, image_filename, display_order))
+        conn.commit()
+        conn.close()
+        
+        flash('Team member added successfully!', 'success')
+        return redirect(url_for('admin_team'))
+    
+    return render_template('admin/new_team_member.html')
+
+@app.route('/admin/team/edit/<int:member_id>', methods=['GET', 'POST'])
+@admin_required
+def edit_team_member(member_id):
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        name = request.form['name']
+        position = request.form['position']
+        description = request.form['description']
+        display_order = request.form.get('display_order', 0)
+        is_active = 'is_active' in request.form
+        remove_image = 'remove_image' in request.form
+        
+        # Get current member data
+        current_member = conn.execute('SELECT image_filename FROM team_members WHERE id = ?', (member_id,)).fetchone()
+        
+        # Handle file upload/removal
+        image_filename = current_member['image_filename']
+        
+        if remove_image and image_filename:
+            try:
+                os.remove(os.path.join('static/uploads/team', image_filename))
+            except:
+                pass
+            image_filename = None
+        
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '' and allowed_file(file.filename):
+                os.makedirs('static/uploads/team', exist_ok=True)
+                
+                # Remove old image if exists
+                if image_filename:
+                    try:
+                        os.remove(os.path.join('static/uploads/team', image_filename))
+                    except:
+                        pass
+                
+                # Save new image
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                filename = timestamp + filename
+                file.save(os.path.join('static/uploads/team', filename))
+                image_filename = filename
+        
+        conn.execute('''UPDATE team_members SET 
+                        name = ?, position = ?, description = ?, image_filename = ?, 
+                        display_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
+                        WHERE id = ?''',
+                    (name, position, description, image_filename, display_order, is_active, member_id))
+        conn.commit()
+        conn.close()
+        
+        flash('Team member updated successfully!', 'success')
+        return redirect(url_for('admin_team'))
+    
+    member = conn.execute('SELECT * FROM team_members WHERE id = ?', (member_id,)).fetchone()
+    conn.close()
+    
+    if not member:
+        flash('Team member not found!', 'error')
+        return redirect(url_for('admin_team'))
+    
+    return render_template('admin/edit_team_member.html', member=member)
+
+@app.route('/admin/team/delete/<int:member_id>')
+@admin_required
+def delete_team_member(member_id):
+    conn = get_db_connection()
+    
+    # Get member image filename before deletion
+    member = conn.execute('SELECT image_filename FROM team_members WHERE id = ?', (member_id,)).fetchone()
+    
+    # Delete the image file if exists
+    if member and member['image_filename']:
+        try:
+            os.remove(os.path.join('static/uploads/team', member['image_filename']))
+        except:
+            pass
+    
+    conn.execute('DELETE FROM team_members WHERE id = ?', (member_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Team member deleted successfully!', 'success')
+    return redirect(url_for('admin_team'))
+
+@app.route('/admin/team/toggle-status/<int:member_id>', methods=['POST'])
+@admin_required
+def toggle_team_member_status(member_id):
+    conn = get_db_connection()
+    
+    # Get current member status
+    member = conn.execute('SELECT name, is_active FROM team_members WHERE id = ?', (member_id,)).fetchone()
+    
+    if not member:
+        flash('Team member not found!', 'error')
+        return redirect(url_for('admin_team'))
+    
+    # Toggle the status
+    new_status = not member['is_active']
+    
+    conn.execute('UPDATE team_members SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                (new_status, member_id))
+    conn.commit()
+    conn.close()
+    
+    status_text = "activated" if new_status else "deactivated"
+    flash(f"Team member '{member['name']}' has been {status_text}!", 'success')
+    return redirect(url_for('admin_team'))
+
+
 # ========================= EVENTS MANAGEMENT ==================
 
 @app.route('/admin/events')
@@ -297,7 +505,6 @@ def new_event():  # THIS WAS MISSING!
         event_date = request.form['event_date']
         event_type = request.form['event_type']
         registration_link = request.form['registration_link']
-        gallery_link = request.form['gallery_link']
         
         # Handle multiple file uploads
         image_filenames = []
@@ -315,9 +522,9 @@ def new_event():  # THIS WAS MISSING!
                     image_filenames.append(filename)
         
         conn = get_db_connection()
-        conn.execute('''INSERT INTO events (title, description, event_date, event_type, registration_link, gallery_link, image_filenames) 
+        conn.execute('''INSERT INTO events (title, description, event_date, event_type, registration_link, image_filenames) 
                         VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                    (title, description, event_date, event_type, registration_link, gallery_link, str(image_filenames)))
+                    (title, description, event_date, event_type, registration_link, str(image_filenames)))
         conn.commit()
         conn.close()
         
@@ -337,7 +544,6 @@ def edit_event(event_id):
         event_date = request.form['event_date']
         event_type = request.form['event_type']
         registration_link = request.form['registration_link']
-        gallery_link = request.form['gallery_link']
         is_active = 'is_active' in request.form
         remove_images = request.form.getlist('remove_images')
         
@@ -378,11 +584,11 @@ def edit_event(event_id):
         
         conn.execute('''UPDATE events SET 
                         title = ?, description = ?, event_date = ?, event_type = ?, 
-                        registration_link = ?, gallery_link = ?, image_filenames = ?, 
+                        registration_link = ?, image_filenames = ?, 
                         is_active = ?, updated_at = CURRENT_TIMESTAMP 
                         WHERE id = ?''',
                     (title, description, event_date, event_type, registration_link, 
-                     gallery_link, str(current_images), is_active, event_id))
+                    str(current_images), is_active, event_id))
         conn.commit()
         conn.close()
         
@@ -432,6 +638,32 @@ def delete_event(event_id):
     
     flash('Event deleted successfully!', 'success')
     return redirect(url_for('admin_events'))
+
+@app.route('/admin/events/toggle-status/<int:event_id>', methods=['POST'])
+@admin_required
+def toggle_event_status(event_id):
+    conn = get_db_connection()
+    
+    # Get current event status
+    event = conn.execute('SELECT title, is_active FROM events WHERE id = ?', (event_id,)).fetchone()
+    
+    if not event:
+        flash('Event not found!', 'error')
+        return redirect(url_for('admin_events'))
+    
+    # Toggle the status
+    new_status = not event['is_active']
+    
+    conn.execute('UPDATE events SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                (new_status, event_id))
+    conn.commit()
+    conn.close()
+    
+    status_text = "activated" if new_status else "deactivated"
+    flash(f"Event '{event['title']}' has been {status_text}!", 'success')
+    return redirect(url_for('admin_events'))
+
+
 
 # ========================= CONTACT MANAGEMENT ===========================================
 @app.route('/contact', methods=['POST'])
@@ -542,6 +774,8 @@ def admin_dashboard():
     # Get counts
     messages_count = conn.execute('SELECT COUNT(*) FROM contact_messages').fetchone()[0]
     schools_count = conn.execute('SELECT COUNT(*) FROM schools').fetchone()[0]
+    events_count = conn.execute('SELECT COUNT(*) FROM events').fetchone()[0]
+    upcoming_events_count = conn.execute('SELECT COUNT(*) FROM events WHERE event_type = "upcoming" AND is_active = 1').fetchone()[0]
     
     # Get recent messages (last 5)
     recent_messages = conn.execute('''
@@ -550,12 +784,23 @@ def admin_dashboard():
         LIMIT 5
     ''').fetchall()
     
+    # Get upcoming events (next 3)
+    upcoming_events = conn.execute('''
+        SELECT * FROM events 
+        WHERE event_type = "upcoming" AND is_active = 1
+        ORDER BY event_date ASC 
+        LIMIT 3
+    ''').fetchall()
+    
     conn.close()
     
     return render_template('admin/dashboard.html', 
                          messages_count=messages_count,
                          schools_count=schools_count,
-                         recent_messages=recent_messages)
+                         events_count=events_count,
+                         upcoming_events_count=upcoming_events_count,
+                         recent_messages=recent_messages,
+                         upcoming_events=upcoming_events)
 
 # ========================= LOGOUT ==================
 @app.route('/admin/logout')
@@ -568,4 +813,5 @@ if __name__ == '__main__':
     
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs(app.config['UPLOAD_FOLDER_EVENTS'], exist_ok=True)
+    os.makedirs('static/uploads/team', exist_ok=True)
     app.run(debug=True)

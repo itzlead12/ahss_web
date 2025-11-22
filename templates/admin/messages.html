@@ -5,29 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Messages - AHSS Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
-<body class="bg-gray-100">
-    {% include 'admin/include/header.html' %}
+<body class="bg-gray-50 text-gray-800">
 
-    <div class="flex">
+    <div class="flex min-h-screen">
         {% include 'admin/include/sidebar.html' %}
         
-        <main class="lg:ml-64 flex-1 p-6">
-            <div class="max-w-7xl mx-auto">
+        <main class="lg:ml-64 flex-1 p-8">
+            <div class="max-w-7xl mx-auto space-y-8">
+
                 <!-- Header -->
-                <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-3xl font-bold text-gray-800">Contact Messages</h1>
-                    <span class="text-lg text-gray-600">{{ total_messages }} Total Messages</span>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold">Contact Messages</h1>
+                        <p class="text-gray-500 text-sm mt-1">Manage all contact messages from your website</p>
+                    </div>
+                    <span class="text-lg text-gray-600 bg-white px-4 py-2 rounded-xl border border-gray-200">
+                        {{ total_messages }} Total Messages
+                    </span>
                 </div>
 
                 <!-- Flash Messages -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                        <div class="mb-6 p-4 rounded-lg {% if category == 'error' %}bg-red-100 border border-red-400 text-red-700{% else %}bg-green-100 border border-green-400 text-green-700{% endif %}">
+                        <div class="p-4 rounded-2xl border {% if category == 'error' %}bg-red-50 border-red-200 text-red-700{% else %}bg-green-50 border-green-200 text-green-700{% endif %}">
                             <div class="flex justify-between items-center">
-                                {{ message }}
-                                <button class="text-lg font-bold">&times;</button>
+                                <span>{{ message }}</span>
+                                <button class="text-lg font-bold hover:opacity-70 transition">&times;</button>
                             </div>
                         </div>
                         {% endfor %}
@@ -35,105 +41,136 @@
                 {% endwith %}
 
                 <!-- Statistics -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-blue-600">{{ total_messages }}</div>
-                            <div class="text-sm text-gray-600 mt-2">Total Messages</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Total Messages</p>
+                                <p class="text-4xl font-semibold mt-2">{{ total_messages }}</p>
+                            </div>
+                            <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                                <i class='bx bxs-message-dots text-2xl'></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-yellow-600">{{ unread_messages }}</div>
-                            <div class="text-sm text-gray-600 mt-2">Unread Messages</div>
+                    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Unread Messages</p>
+                                <p class="text-4xl font-semibold mt-2">{{ unread_messages }}</p>
+                            </div>
+                            <div class="p-3 bg-yellow-100 text-yellow-600 rounded-xl">
+                                <i class='bx bxs-time text-2xl'></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-green-600">{{ read_messages }}</div>
-                            <div class="text-sm text-gray-600 mt-2">Read Messages</div>
+                    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Read Messages</p>
+                                <p class="text-4xl font-semibold mt-2">{{ read_messages }}</p>
+                            </div>
+                            <div class="p-3 bg-green-100 text-green-600 rounded-xl">
+                                <i class='bx bxs-check-circle text-2xl'></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-purple-600">{{ today_messages }}</div>
-                            <div class="text-sm text-gray-600 mt-2">Today's Messages</div>
+                    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500">Today's Messages</p>
+                                <p class="text-4xl font-semibold mt-2">{{ today_messages }}</p>
+                            </div>
+                            <div class="p-3 bg-purple-100 text-purple-600 rounded-xl">
+                                <i class='bx bxs-calendar text-2xl'></i>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Messages Table -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message Preview</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Message Preview</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 {% for message in messages %}
-                                <tr class="hover:bg-gray-50 {% if not message.is_read %}bg-blue-50{% endif %}">
+                                <tr class="hover:bg-gray-50 transition {% if not message.is_read %}bg-blue-50 border-l-4 border-l-blue-500{% endif %}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <div class="text-sm font-medium text-gray-900">{{ message.name }}</div>
+                                            <div class="text-sm font-semibold text-gray-900">{{ message.name }}</div>
                                             {% if not message.is_read %}
-                                            <span class="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                New
+                                            <span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <i class='bx bx-star mr-1'></i> New
                                             </span>
                                             {% endif %}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <a href="mailto:{{ message.email }}" class="text-sm text-blue-600 hover:text-blue-900">
-                                            {{ message.email }}
+                                        <a href="mailto:{{ message.email }}" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                                            <i class='bx bx-envelope mr-2'></i> {{ message.email }}
                                         </a>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900 max-w-xs truncate">
+                                        <div class="text-sm text-gray-900 max-w-xs">
                                             {{ message.message[:80] }}{% if message.message|length > 80 %}...{% endif %}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-500">{{ message.created_at[:16] }}</div>
+                                        <div class="text-sm text-gray-500 flex items-center">
+                                            <i class='bx bx-calendar mr-2'></i> {{ message.created_at[:16] }}
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         {% if message.is_read %}
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                                Read
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <i class='bx bx-check mr-1'></i> Read
                                             </span>
                                         {% else %}
-                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                Unread
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <i class='bx bx-time mr-1'></i> Unread
                                             </span>
                                         {% endif %}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex space-x-3">
+                                        <div class="flex space-x-4">
                                             <a href="{{ url_for('view_message', message_id=message.id) }}" 
-                                               class="text-blue-600 hover:text-blue-900">View</a>
+                                               class="text-blue-600 hover:text-blue-800 flex items-center">
+                                                <i class='bx bx-show mr-1'></i> View
+                                            </a>
                                             {% if not message.is_read %}
                                             <a href="{{ url_for('mark_message_read', message_id=message.id) }}" 
-                                               class="text-green-600 hover:text-green-900">Mark Read</a>
+                                               class="text-green-600 hover:text-green-800 flex items-center">
+                                                <i class='bx bx-check mr-1'></i> Mark Read
+                                            </a>
                                             {% else %}
                                             <a href="{{ url_for('mark_message_unread', message_id=message.id) }}" 
-                                               class="text-yellow-600 hover:text-yellow-900">Mark Unread</a>
+                                               class="text-yellow-600 hover:text-yellow-800 flex items-center">
+                                                <i class='bx bx-time mr-1'></i> Mark Unread
+                                            </a>
                                             {% endif %}
                                             <a href="{{ url_for('delete_message', message_id=message.id) }}" 
                                                onclick="return confirm('Are you sure you want to delete this message?')"
-                                               class="text-red-600 hover:text-red-900">Delete</a>
+                                               class="text-red-600 hover:text-red-800 flex items-center">
+                                                <i class='bx bx-trash mr-1'></i> Delete
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center">
+                                    <td colspan="6" class="px-6 py-12 text-center">
                                         <div class="text-gray-500">
+                                            <i class='bx bx-message-dots text-4xl mb-3 text-gray-300'></i>
                                             <h4 class="text-lg font-medium mb-2">No Messages Yet</h4>
                                             <p>Contact messages from your website will appear here.</p>
                                         </div>
@@ -147,5 +184,17 @@
             </div>
         </main>
     </div>
+
+    <script>
+        // Close flash messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeButtons = document.querySelectorAll('[class*="bg-"] button');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.parentElement.parentElement.style.display = 'none';
+                });
+            });
+        });
+    </script>
 </body>
 </html>

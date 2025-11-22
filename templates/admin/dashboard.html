@@ -1,3 +1,4 @@
+<!-- Modernized Admin Dashboard (Linear / Notion Style) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,122 +6,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AHSS | Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
-<body class="bg-gray-100">
-    {% include 'admin/include/header.html' %}
+<body class="bg-gray-50 text-gray-800">
 
-    <div class="flex">
-        {% include 'admin/include/sidebar.html' %}
-        
-        <!-- Main Content -->
-        <main class="lg:ml-64 flex-1 p-6">
-            <div class="max-w-7xl mx-auto">
-                <!-- Header -->
-                <div class="mb-8">
-                    <h1 class="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
+<div class="flex min-h-screen">
+    {% include 'admin/include/sidebar.html' %}
+
+    <main class="lg:ml-64 flex-1 p-8">
+        <div class="max-w-7xl mx-auto space-y-10">
+
+            <!-- Page Header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">Dashboard</h1>
+                    <p class="text-gray-500 text-sm mt-1">Overview of your system activity</p>
                 </div>
-
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <!-- Messages Card -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-blue-90 flex items-center justify-center">
-                                    <span class="text-blue-600">
-                                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                                        </svg>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Messages</p>
-                                <p class="text-2xl font-bold text-gray-900">{{ messages_count }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Schools Card -->
-                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-blue-90 flex items-center justify-center">
-                                    <span class="text-blue-600">
-                                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                        </svg>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600">Schools</p>
-                                <p class="text-2xl font-bold text-gray-900">{{ schools_count }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Messages -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-semibold text-gray-800">Recent Messages</h2>
-                        <a href="{{ url_for('admin_messages') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                            View All
-                        </a>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        {% if recent_messages %}
-                            {% for message in recent_messages %}
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div>
-                                    <p class="font-medium text-gray-800">New message from: {{ message.name }}</p>
-                                    <p class="text-sm text-gray-600">{{ message.email }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <small class="text-gray-500 text-sm">{{ message.created_at[:16] }}</small>
-                                    <div class="mt-1">
-                                        <a href="{{ url_for('view_message', message_id=message.id) }}" 
-                                           class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                            View
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-center py-8">
-                                <p class="text-gray-500">No recent messages</p>
-                            </div>
-                        {% endif %}
-                    </div>
+                <div class="flex items-center space-x-3">
+                    <button class="px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition text-sm flex items-center">
+                        <i class='bx bx-refresh mr-2'></i> Refresh
+                    </button>
                 </div>
             </div>
-        </main>
+
+            <!-- Stats Grid -->
+<!-- Add this to your existing stats grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Messages -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Messages</p>
+                <p class="text-4xl font-semibold mt-2">{{ messages_count }}</p>
+            </div>
+            <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                <i class='bx bxs-message-dots text-2xl'></i>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // Mobile sidebar toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebarToggle = document.querySelector('header button');
-            const sidebar = document.querySelector('.fixed');
-            const overlay = document.getElementById('sidebarOverlay');
+    <!-- Schools -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Schools</p>
+                <p class="text-4xl font-semibold mt-2">{{ schools_count }}</p>
+            </div>
+            <div class="p-3 bg-green-100 text-green-600 rounded-xl">
+                <i class='bx bxs-school text-2xl'></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Events -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Total Events</p>
+                <p class="text-4xl font-semibold mt-2">{{ events_count }}</p>
+            </div>
+            <div class="p-3 bg-purple-100 text-purple-600 rounded-xl">
+                <i class='bx bxs-calendar-event text-2xl'></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Upcoming Events</p>
+                <p class="text-4xl font-semibold mt-2">{{ upcoming_events_count }}</p>
+            </div>
+            <div class="p-3 bg-orange-100 text-orange-600 rounded-xl">
+                <i class='bx bx-time text-2xl'></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this new section after your recent messages -->
+<!-- Upcoming Events Section -->
+<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold">Upcoming Events</h2>
+        <a href="{{ url_for('admin_events') }}" class="text-blue-600 text-sm font-medium hover:underline flex items-center">
+            View All <i class='bx bx-right-arrow-alt ml-1'></i>
+        </a>
+    </div>
+
+    {% if upcoming_events %}
+        <div class="space-y-4">
+            {% for event in upcoming_events %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition">
+                <div>
+                    <p class="font-semibold text-gray-900">{{ event.title }}</p>
+                    <p class="text-sm text-gray-500">{{ event.event_date }}</p>
+                </div>
+                <div class="text-right">
+                    <small class="text-xs text-gray-500 block mb-1">
+                        {% if event.event_type == 'upcoming' %}
+                            <span class="text-blue-600">● Upcoming</span>
+                        {% else %}
+                            <span class="text-green-600">● Past</span>
+                        {% endif %}
+                    </small>
+                    <a href="{{ url_for('edit_event', event_id=event.id) }}" class="text-blue-600 text-sm hover:underline">View</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="py-10 text-center text-gray-500">
+            <i class='bx bx-calendar-event text-4xl mb-3 text-gray-300'></i>
+            <p>No upcoming events scheduled.</p>
+            <a href="{{ url_for('new_event') }}" class="text-blue-600 text-sm hover:underline mt-2 inline-block">
+                Add your first event
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+            <!-- Recent Messages Section -->
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold">Recent Messages</h2>
+                    <a href="{{ url_for('admin_messages') }}" class="text-blue-600 text-sm font-medium hover:underline flex items-center">
+                        View All <i class='bx bx-right-arrow-alt ml-1'></i>
+                    </a>
+                </div>
+
+                {% if recent_messages %}
+                    <div class="space-y-4">
+                        {% for message in recent_messages %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ message.name }}</p>
+                                <p class="text-sm text-gray-500">{{ message.email }}</p>
+                            </div>
+                            <div class="text-right">
+                                <small class="text-xs text-gray-500 block mb-1">{{ message.created_at[:16] }}</small>
+                                <a href="{{ url_for('view_message', message_id=message.id) }}" class="text-blue-600 text-sm hover:underline">View</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="py-10 text-center text-gray-500">No recent messages found</div>
+                {% endif %}
+            </div>
             
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('-translate-x-full');
-                    overlay.classList.toggle('hidden');
-                });
-            }
-            
-            if (overlay) {
-                overlay.addEventListener('click', function() {
-                    sidebar.classList.add('-translate-x-full');
-                    overlay.classList.add('hidden');
-                });
-            }
-        });
-    </script>
+
+        </div>
+    </main>
+</div>
+
 </body>
 </html>
