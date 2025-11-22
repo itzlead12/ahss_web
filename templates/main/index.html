@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Addis Highschool Science Society</title>
+  <title>{% if hero %}{{ hero.agency_name }}{% else %}Addis Highschool Science Society{% endif %}</title>
   <meta name="description" content="Uniting science and tech clubs to foster innovation and collaboration across Ethiopia">
   <meta name="keywords" content="science, technology, Ethiopia, highschool, robotics, coding, research">
 
@@ -34,7 +34,7 @@
     <div class="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
 
       <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
-        <img src="/static/img/logo.webp" alt="">
+        <!-- <img src="/static/img/logo.webp" alt=""> -->
         <h1 class="sitename">AHSS</h1>
       </a>
 
@@ -64,22 +64,22 @@
           <div class="col-lg-7 content-col" data-aos="fade-up">
             <div class="content">
               <div class="agency-name">
-                <h5>ADDIS HIGHSCHOOL SCIENCE SOCIETY</h5>
+                <h5>{% if hero %}{{ hero.agency_name }}{% else %}ADDIS HIGHSCHOOL SCIENCE SOCIETY{% endif %}</h5>
               </div>
 
               <div class="main-heading">
-                <h1>INNOVATE <br>COLLABORATE</h1>
+                <h1>{% if hero %}{{ hero.main_title | safe }}{% else %}INNOVATE <br>COLLABORATE{% endif %}</h1>
               </div>
 
               <div class="divider"></div>
 
               <div class="description">
-                <p>Uniting science and technology clubs across Ethiopia to foster innovation, collaboration, and scientific excellence. We bring together passionate students to work on impactful projects and develop skills for the future.</p>
+                <p>{% if hero %}{{ hero.description }}{% else %}Uniting science and technology clubs across Ethiopia to foster innovation, collaboration, and scientific excellence. We bring together passionate students to work on impactful projects and develop skills for the future.{% endif %}</p>
               </div>
 
               <div class="cta-button">
                 <a href="#about" class="btn">
-                  <span>Learn More</span>
+                  <span>{% if hero %}{{ hero.button_text }}{% else %}Learn More{% endif %}</span>
                   <i class="bi bi-arrow-right"></i>
                 </a>
               </div>
@@ -89,7 +89,12 @@
           <div class="col-lg-5" data-aos="zoom-out">
             <div class="visual-content">
               <div class="fluid-shape">
+                {% if hero and hero.image_filename %}
+                <img src="{{ url_for('static', filename='uploads/hero/' + hero.image_filename) }}" 
+                     alt="Science Abstract" class="fluid-img" style="border-radius: 15px;" loading="lazy">
+                {% else %}
                 <img src="/static/img/hero-img.jpg" alt="Science Abstract" class="fluid-img" style="border-radius: 15px;" loading="lazy">
+                {% endif %}
               </div>
             </div>
           </div>
@@ -111,29 +116,34 @@
         <div class="row gx-5 align-items-center">
           <div class="col-lg-6" data-aos="fade-right" data-aos-delay="200">
             <div class="about-image position-relative">
+              {% if about and about.image_filename %}
+              <img src="{{ url_for('static', filename='uploads/about/' + about.image_filename) }}" 
+                   class="img-fluid rounded-4 shadow-sm" alt="Science Lab" loading="lazy">
+              {% else %}
               <img src="/static/img/hero-img.jpg" class="img-fluid rounded-4 shadow-sm" alt="Science Lab" loading="lazy">
+              {% endif %}
             </div>
           </div>
 
           <div class="col-lg-6 mt-4 mt-lg-0" data-aos="fade-left" data-aos-delay="300">
             <div class="about-content">
-              <h2>Empowering Young Scientists Across Ethiopia</h2>
-              <p class="lead">We unite science and technology clubs to create a collaborative ecosystem for innovation and learning.</p>
-              <p>Through shared resources, mentorship, and collaborative projects, we're building the next generation of Ethiopian scientists, engineers, and innovators.</p>
+              <h2>{% if about %}{{ about.main_title }}{% else %}Empowering Young Scientists Across Ethiopia{% endif %}</h2>
+              <p class="lead">{% if about %}{{ about.lead_text }}{% else %}We unite science and technology clubs to create a collaborative ecosystem for innovation and learning.{% endif %}</p>
+              <p>{% if about %}{{ about.description }}{% else %}Through shared resources, mentorship, and collaborative projects, we're building the next generation of Ethiopian scientists, engineers, and innovators.{% endif %}</p>
 
               <div class="row g-4 mt-3">
                 <div class="col-md-6" data-aos="zoom-in" data-aos-delay="400">
                   <div class="feature-item">
                     <i class="bi bi-check-circle-fill"></i>
-                    <h5>Collaborative Environment</h5>
-                    <p>Connect with like-minded students and work together on innovative projects that solve real-world problems.</p>
+                    <h5>{% if about %}{{ about.feature1_title }}{% else %}Collaborative Environment{% endif %}</h5>
+                    <p>{% if about %}{{ about.feature1_description }}{% else %}Connect with like-minded students and work together on innovative projects that solve real-world problems.{% endif %}</p>
                   </div>
                 </div>
                 <div class="col-md-6" data-aos="zoom-in" data-aos-delay="450">
                   <div class="feature-item">
                     <i class="bi bi-lightbulb-fill"></i>
-                    <h5>Skill Development</h5>
-                    <p>Gain hands-on experience in robotics, coding, research, and other STEM fields through workshops and projects.</p>
+                    <h5>{% if about %}{{ about.feature2_title }}{% else %}Skill Development{% endif %}</h5>
+                    <p>{% if about %}{{ about.feature2_description }}{% else %}Gain hands-on experience in robotics, coding, research, and other STEM fields through workshops and projects.{% endif %}</p>
                   </div>
                 </div>
               </div>
@@ -486,7 +496,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </section><!-- /Team Section -->
 
 <!-- Contact Section -->
-<!-- Contact Section -->
 <section id="contact" class="contact section">
 
   <!-- Section Title -->
@@ -543,13 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
               </div>
 
-              <!-- REMOVE THESE LAGGING ELEMENTS -->
-              <!-- <div class="col-12">
-                <div class="loading">Loading</div>
-                <div class="error-message"></div>
-                <div class="sent-message">Your message has been sent. We'll contact you soon!</div>
-              </div> -->
-
               <div class="col-12 text-center">
                 <button type="submit" class="btn btn-primary btn-submit">SEND MESSAGE</button>
               </div>
@@ -568,15 +570,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="container footer-top">
       <div class="row gy-4">
         <div class="col-lg-5 col-md-12 footer-about">
-          <a href="index.html" class="logo d-flex align-items-center">
+          <a href="/" class="logo d-flex align-items-center">
             <span class="sitename">AHSS</span>
           </a>
-          <p>Addis Highschool Science Society unites science and technology clubs to foster innovation, collaboration, and scientific excellence across Ethiopia.</p>
+          <p>{% if footer %}{{ footer.description }}{% else %}Addis Highschool Science Society unites science and technology clubs to foster innovation, collaboration, and scientific excellence across Ethiopia.{% endif %}</p>
           <div class="social-links d-flex mt-4">
-            <a href=""><i class="bi bi-instagram"></i></a>
-            <a href=""><i class="bi bi-telegram"></i></a>
-            <a href=""><i class="bi bi-youtube"></i></a>
-            <a href=""><i class="bi bi-tiktok"></i></a>
+            {% if footer and footer.instagram_url %}
+            <a href="{{ footer.instagram_url }}" target="_blank"><i class="bi bi-instagram"></i></a>
+            {% endif %}
+            {% if footer and footer.telegram_url %}
+            <a href="{{ footer.telegram_url }}" target="_blank"><i class="bi bi-telegram"></i></a>
+            {% endif %}
+            {% if footer and footer.youtube_url %}
+            <a href="{{ footer.youtube_url }}" target="_blank"><i class="bi bi-youtube"></i></a>
+            {% endif %}
+            {% if footer and footer.tiktok_url %}
+            <a href="{{ footer.tiktok_url }}" target="_blank"><i class="bi bi-tiktok"></i></a>
+            {% endif %}
           </div>
         </div>
 
@@ -587,13 +597,15 @@ document.addEventListener('DOMContentLoaded', function() {
             <li><a href="#about">About</a></li>
             <li><a href="#schools">Schools</a></li>
             <li><a href="#events">Events</a></li>
+            <li><a href="#team">Team</a></li>
+            <li><a href="#contact">Contact</a></li>
           </ul>
         </div>
       </div>
     </div>
 
     <div class="container copyright text-center mt-4">
-      <p>© <span>Copyright</span> <strong class="px-1 sitename">Addis Highschool Science Society</strong> <span>All Rights Reserved</span></p>
+      <p>© <span>Copyright</span> <strong class="px-1 sitename">{% if hero %}{{ hero.agency_name }}{% else %}Addis Highschool Science Society{% endif %}</strong> <span>All Rights Reserved</span></p>
       <div class="credits">
         Empowering the next generation of Ethiopian innovators
       </div>

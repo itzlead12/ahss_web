@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Footer Section - AHSS Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="flex min-h-screen">
+        {% include 'admin/include/sidebar.html' %}
+        
+        <main class="lg:ml-64 flex-1 p-8">
+            <div class="max-w-4xl mx-auto space-y-8">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold">Footer Section</h1>
+                        <p class="text-gray-500 text-sm mt-1">Manage your website's footer section</p>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="p-4 rounded-2xl border {% if category == 'error' %}bg-red-50 border-red-200 text-red-700{% else %}bg-green-50 border-green-200 text-green-700{% endif %}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Footer Form -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+                    <form method="POST" class="space-y-8">
+                        
+                        <!-- Description -->
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-3">Footer Description</label>
+                            <textarea id="description" name="description" rows="3" required
+                                      class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                      placeholder="Description about your organization...">{{ footer.description if footer else '' }}</textarea>
+                        </div>
+
+                        <!-- Contact Email -->
+                        <div>
+                            <label for="contact_email" class="block text-sm font-medium text-gray-700 mb-3">Contact Email</label>
+                            <input type="email" id="contact_email" name="contact_email" 
+                                   value="{{ footer.contact_email if footer else '' }}"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                   placeholder="contact@example.com">
+                        </div>
+
+                        <!-- Social Media Links -->
+                        <div class="space-y-6">
+                            <h3 class="text-lg font-semibold text-gray-900">Social Media Links</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Instagram -->
+                                <div>
+                                    <label for="instagram_url" class="block text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                        <i class='bx bxl-instagram mr-2 text-pink-600'></i> Instagram URL
+                                    </label>
+                                    <input type="url" id="instagram_url" name="instagram_url" 
+                                           value="{{ footer.instagram_url if footer else '' }}"
+                                           class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                           placeholder="https://instagram.com/yourpage">
+                                </div>
+
+                                <!-- Telegram -->
+                                <div>
+                                    <label for="telegram_url" class="block text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                        <i class='bx bxl-telegram mr-2 text-blue-500'></i> Telegram URL
+                                    </label>
+                                    <input type="url" id="telegram_url" name="telegram_url" 
+                                           value="{{ footer.telegram_url if footer else '' }}"
+                                           class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                           placeholder="https://t.me/yourchannel">
+                                </div>
+
+                                <!-- YouTube -->
+                                <div>
+                                    <label for="youtube_url" class="block text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                        <i class='bx bxl-youtube mr-2 text-red-600'></i> YouTube URL
+                                    </label>
+                                    <input type="url" id="youtube_url" name="youtube_url" 
+                                           value="{{ footer.youtube_url if footer else '' }}"
+                                           class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                           placeholder="https://youtube.com/yourchannel">
+                                </div>
+
+                                <!-- TikTok -->
+                                <div>
+                                    <label for="tiktok_url" class="block text-sm font-medium text-gray-700 mb-3 flex items-center">
+                                        <i class='bx bxl-tiktok mr-2 text-gray-900'></i> TikTok URL
+                                    </label>
+                                    <input type="url" id="tiktok_url" name="tiktok_url" 
+                                           value="{{ footer.tiktok_url if footer else '' }}"
+                                           class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                           placeholder="https://tiktok.com/@yourpage">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex justify-end space-x-4 pt-6">
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-200 flex items-center">
+                                <i class='bx bx-save mr-2'></i> Save Footer Section
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Preview Section -->
+                {% if footer %}
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class='bx bx-show mr-2'></i> Preview
+                    </h3>
+                    <div class="bg-gray-900 text-white rounded-xl p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <h4 class="font-semibold mb-2">AHSS</h4>
+                                <p class="text-gray-300 text-sm">{{ footer.description }}</p>
+                                <div class="flex space-x-3 mt-4">
+                                    {% if footer.instagram_url %}
+                                    <a href="{{ footer.instagram_url }}" class="text-gray-300 hover:text-white">
+                                        <i class='bx bxl-instagram text-lg'></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if footer.telegram_url %}
+                                    <a href="{{ footer.telegram_url }}" class="text-gray-300 hover:text-white">
+                                        <i class='bx bxl-telegram text-lg'></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if footer.youtube_url %}
+                                    <a href="{{ footer.youtube_url }}" class="text-gray-300 hover:text-white">
+                                        <i class='bx bxl-youtube text-lg'></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if footer.tiktok_url %}
+                                    <a href="{{ footer.tiktok_url }}" class="text-gray-300 hover:text-white">
+                                        <i class='bx bxl-tiktok text-lg'></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

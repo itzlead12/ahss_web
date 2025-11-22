@@ -65,9 +65,50 @@ def init_db():
             is_active BOOLEAN DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
+    # Hero Section Table
+    c.execute('''CREATE TABLE IF NOT EXISTS hero_section
+                (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agency_name TEXT NOT NULL,
+                main_title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                button_text TEXT NOT NULL,
+                image_filename TEXT,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    
+    # About Section Table
+    c.execute('''CREATE TABLE IF NOT EXISTS about_section
+                (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                main_title TEXT NOT NULL,
+                lead_text TEXT NOT NULL,
+                description TEXT NOT NULL,
+                image_filename TEXT,
+                feature1_title TEXT NOT NULL,
+                feature1_description TEXT NOT NULL,
+                feature2_title TEXT NOT NULL,
+                feature2_description TEXT NOT NULL,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    
+    # Footer Section Table
+    c.execute('''CREATE TABLE IF NOT EXISTS footer_section
+                (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                description TEXT NOT NULL,
+                instagram_url TEXT,
+                telegram_url TEXT,
+                youtube_url TEXT,
+                tiktok_url TEXT,
+                contact_email TEXT,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
     conn.commit()
     conn.close()
+    
 
 init_db()
 
@@ -87,27 +128,20 @@ def admin_required(f):
 @app.route('/')
 def index():
     conn = get_db_connection()
-    schools = conn.execute('''
-        SELECT * FROM schools 
-        WHERE is_active = 1 
-        ORDER BY created_at DESC
-    ''').fetchall()
     
-    events = conn.execute('''
-        SELECT * FROM events 
-        WHERE is_active = 1 
-        ORDER BY event_date DESC
-    ''').fetchall()
+    # Dynamic sections
+    hero = conn.execute('SELECT * FROM hero_section WHERE is_active = 1').fetchone()
+    about = conn.execute('SELECT * FROM about_section WHERE is_active = 1').fetchone()
+    footer = conn.execute('SELECT * FROM footer_section WHERE is_active = 1').fetchone()
     
-    team_members = conn.execute('''
-        SELECT * FROM team_members 
-        WHERE is_active = 1 
-        ORDER BY display_order ASC, created_at DESC
-    ''').fetchall()
+    # Existing dynamic content
+    schools = conn.execute('SELECT * FROM schools WHERE is_active = 1 ORDER BY created_at DESC').fetchall()
+    events = conn.execute('SELECT * FROM events WHERE is_active = 1 ORDER BY event_date DESC').fetchall()
+    team_members = conn.execute('SELECT * FROM team_members WHERE is_active = 1 ORDER BY display_order ASC, created_at DESC').fetchall()
     
     conn.close()
     
-    # Process events for the template
+    # Process events
     processed_events = []
     for event in events:
         event_dict = dict(event)
@@ -122,6 +156,9 @@ def index():
         processed_events.append(event_dict)
     
     return render_template('main/index.html', 
+                         hero=hero,
+                         about=about, 
+                         footer=footer,
                          schools=schools, 
                          events=processed_events,
                          team_members=team_members)
@@ -146,6 +183,166 @@ def admin_login():
             flash('Invalid credentials!', 'error')
     
     return render_template('admin/login.html')
+
+# ========================= HERO SECTION MANAGEMENT ==================
+
+@app.route('/admin/hero', methods=['GET', 'POST'])
+@admin_required
+def admin_hero():
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        agency_name = request.form['agency_name']
+        main_title = request.form['main_title']
+        description = request.form['description']
+        button_text = request.form['button_text']
+        
+        # Handle image upload
+        image_filename = None
+        if 'hero_image' in request.files:
+            file = request.files['hero_image']
+            if file and file.filename != '' and allowed_file(file.filename):
+                os.makedirs('static/uploads/hero', exist_ok=True)
+                
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                filename = timestamp + filename
+                file.save(os.path.join('static/uploads/hero', filename))
+                image_filename = filename
+        
+        # Check if hero section exists
+        existing_hero = conn.execute('SELECT * FROM hero_section').fetchone()
+        
+        if existing_hero:
+            # Update existing
+            conn.execute('''UPDATE hero_section SET 
+                          agency_name = ?, main_title = ?, description = ?, 
+                          button_text = ?, image_filename = ?, updated_at = CURRENT_TIMESTAMP 
+                          WHERE id = ?''',
+                       (agency_name, main_title, description, button_text, image_filename, existing_hero['id']))
+        else:
+            # Insert new
+            conn.execute('''INSERT INTO hero_section 
+                          (agency_name, main_title, description, button_text, image_filename) 
+                          VALUES (?, ?, ?, ?, ?)''',
+                       (agency_name, main_title, description, button_text, image_filename))
+        
+        conn.commit()
+        conn.close()
+        flash('Hero section updated successfully!', 'success')
+        return redirect(url_for('admin_hero'))
+    
+    # GET request - fetch current hero data
+    hero = conn.execute('SELECT * FROM hero_section').fetchone()
+    conn.close()
+    
+    return render_template('admin/hero.html', hero=hero)
+
+# ========================= ABOUT SECTION MANAGEMENT ==================
+
+@app.route('/admin/about', methods=['GET', 'POST'])
+@admin_required
+def admin_about():
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        main_title = request.form['main_title']
+        lead_text = request.form['lead_text']
+        description = request.form['description']
+        feature1_title = request.form['feature1_title']
+        feature1_description = request.form['feature1_description']
+        feature2_title = request.form['feature2_title']
+        feature2_description = request.form['feature2_description']
+        
+        # Handle image upload
+        image_filename = None
+        if 'about_image' in request.files:
+            file = request.files['about_image']
+            if file and file.filename != '' and allowed_file(file.filename):
+                os.makedirs('static/uploads/about', exist_ok=True)
+                
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+                filename = timestamp + filename
+                file.save(os.path.join('static/uploads/about', filename))
+                image_filename = filename
+        
+        # Check if about section exists
+        existing_about = conn.execute('SELECT * FROM about_section').fetchone()
+        
+        if existing_about:
+            # Update existing
+            conn.execute('''UPDATE about_section SET 
+                          main_title = ?, lead_text = ?, description = ?, image_filename = ?,
+                          feature1_title = ?, feature1_description = ?,
+                          feature2_title = ?, feature2_description = ?, updated_at = CURRENT_TIMESTAMP 
+                          WHERE id = ?''',
+                       (main_title, lead_text, description, image_filename,
+                        feature1_title, feature1_description,
+                        feature2_title, feature2_description, existing_about['id']))
+        else:
+            # Insert new
+            conn.execute('''INSERT INTO about_section 
+                          (main_title, lead_text, description, image_filename,
+                           feature1_title, feature1_description, feature2_title, feature2_description) 
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                       (main_title, lead_text, description, image_filename,
+                        feature1_title, feature1_description, feature2_title, feature2_description))
+        
+        conn.commit()
+        conn.close()
+        flash('About section updated successfully!', 'success')
+        return redirect(url_for('admin_about'))
+    
+    # GET request - fetch current about data
+    about = conn.execute('SELECT * FROM about_section').fetchone()
+    conn.close()
+    
+    return render_template('admin/about.html', about=about)
+
+# ========================= FOOTER SECTION MANAGEMENT ==================
+
+@app.route('/admin/footer', methods=['GET', 'POST'])
+@admin_required
+def admin_footer():
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        description = request.form['description']
+        instagram_url = request.form['instagram_url']
+        telegram_url = request.form['telegram_url']
+        youtube_url = request.form['youtube_url']
+        tiktok_url = request.form['tiktok_url']
+        contact_email = request.form['contact_email']
+        
+        # Check if footer section exists
+        existing_footer = conn.execute('SELECT * FROM footer_section').fetchone()
+        
+        if existing_footer:
+            # Update existing
+            conn.execute('''UPDATE footer_section SET 
+                          description = ?, instagram_url = ?, telegram_url = ?, 
+                          youtube_url = ?, tiktok_url = ?, contact_email = ?, updated_at = CURRENT_TIMESTAMP 
+                          WHERE id = ?''',
+                       (description, instagram_url, telegram_url, youtube_url, tiktok_url, contact_email, existing_footer['id']))
+        else:
+            # Insert new
+            conn.execute('''INSERT INTO footer_section 
+                          (description, instagram_url, telegram_url, youtube_url, tiktok_url, contact_email) 
+                          VALUES (?, ?, ?, ?, ?, ?)''',
+                       (description, instagram_url, telegram_url, youtube_url, tiktok_url, contact_email))
+        
+        conn.commit()
+        conn.close()
+        flash('Footer section updated successfully!', 'success')
+        return redirect(url_for('admin_footer'))
+    
+    # GET request - fetch current footer data
+    footer = conn.execute('SELECT * FROM footer_section').fetchone()
+    conn.close()
+    
+    return render_template('admin/footer.html', footer=footer)
+
 
 # ========================= SCHOOLS MANAGEMENT ==================
 
@@ -498,13 +695,14 @@ def admin_events():
 
 @app.route('/admin/events/new', methods=['GET', 'POST'])
 @admin_required
-def new_event():  # THIS WAS MISSING!
+def new_event():
     if request.method == 'POST':
         title = request.form['title']
         description = request.form['description']
         event_date = request.form['event_date']
         event_type = request.form['event_type']
         registration_link = request.form['registration_link']
+        # gallery_link removed
         
         # Handle multiple file uploads
         image_filenames = []
@@ -523,8 +721,8 @@ def new_event():  # THIS WAS MISSING!
         
         conn = get_db_connection()
         conn.execute('''INSERT INTO events (title, description, event_date, event_type, registration_link, image_filenames) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                    (title, description, event_date, event_type, registration_link, str(image_filenames)))
+                        VALUES (?, ?, ?, ?, ?, ?)''',  # 6 columns now
+                    (title, description, event_date, event_type, registration_link, str(image_filenames)))  # 6 values
         conn.commit()
         conn.close()
         

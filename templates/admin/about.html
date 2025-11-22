@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Section - AHSS Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="flex min-h-screen">
+        {% include 'admin/include/sidebar.html' %}
+        
+        <main class="lg:ml-64 flex-1 p-8">
+            <div class="max-w-4xl mx-auto space-y-8">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold">About Section</h1>
+                        <p class="text-gray-500 text-sm mt-1">Manage your website's about section</p>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="p-4 rounded-2xl border {% if category == 'error' %}bg-red-50 border-red-200 text-red-700{% else %}bg-green-50 border-green-200 text-green-700{% endif %}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- About Form -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+                    <form method="POST" enctype="multipart/form-data" class="space-y-8">
+                        
+                        <!-- Main Title -->
+                        <div>
+                            <label for="main_title" class="block text-sm font-medium text-gray-700 mb-3">Main Title</label>
+                            <input type="text" id="main_title" name="main_title" 
+                                   value="{{ about.main_title if about else '' }}" required
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                   placeholder="Empowering Young Scientists Across Ethiopia">
+                        </div>
+
+                        <!-- Lead Text -->
+                        <div>
+                            <label for="lead_text" class="block text-sm font-medium text-gray-700 mb-3">Lead Text</label>
+                            <textarea id="lead_text" name="lead_text" rows="2" required
+                                      class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                      placeholder="Brief introduction...">{{ about.lead_text if about else '' }}</textarea>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-3">Description</label>
+                            <textarea id="description" name="description" rows="4" required
+                                      class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                      placeholder="Detailed description...">{{ about.description if about else '' }}</textarea>
+                        </div>
+
+                        <!-- Features -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Feature 1 -->
+                            <div class="space-y-4">
+                                <h4 class="text-lg font-semibold text-gray-900">Feature 1</h4>
+                                <div>
+                                    <label for="feature1_title" class="block text-sm font-medium text-gray-700 mb-3">Title</label>
+                                    <input type="text" id="feature1_title" name="feature1_title" 
+                                           value="{{ about.feature1_title if about else '' }}" required
+                                           class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                           placeholder="Collaborative Environment">
+                                </div>
+                                <div>
+                                    <label for="feature1_description" class="block text-sm font-medium text-gray-700 mb-3">Description</label>
+                                    <textarea id="feature1_description" name="feature1_description" rows="3" required
+                                              class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                              placeholder="Feature description...">{{ about.feature1_description if about else '' }}</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Feature 2 -->
+                            <div class="space-y-4">
+                                <h4 class="text-lg font-semibold text-gray-900">Feature 2</h4>
+                                <div>
+                                    <label for="feature2_title" class="block text-sm font-medium text-gray-700 mb-3">Title</label>
+                                    <input type="text" id="feature2_title" name="feature2_title" 
+                                           value="{{ about.feature2_title if about else '' }}" required
+                                           class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                           placeholder="Skill Development">
+                                </div>
+                                <div>
+                                    <label for="feature2_description" class="block text-sm font-medium text-gray-700 mb-3">Description</label>
+                                    <textarea id="feature2_description" name="feature2_description" rows="3" required
+                                              class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                              placeholder="Feature description...">{{ about.feature2_description if about else '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- About Image -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-3">Current About Image</label>
+                                <div class="flex items-center space-x-4">
+                                    {% if about and about.image_filename %}
+                                    <div class="flex flex-col items-center space-y-3">
+                                        <img src="{{ url_for('static', filename='uploads/about/' + about.image_filename) }}" 
+                                            alt="About Image" 
+                                            class="w-32 h-32 object-cover rounded-xl border border-gray-200">
+                                    </div>
+                                    {% else %}
+                                    <div class="w-32 h-32 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
+                                        <i class='bx bx-image text-gray-400 text-2xl'></i>
+                                    </div>
+                                    <p class="text-sm text-gray-500">No about image uploaded</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="about_image" class="block text-sm font-medium text-gray-700 mb-3">Upload New About Image</label>
+                                <input type="file" id="about_image" name="about_image" accept=".png,.jpg,.jpeg,.gif,.webp"
+                                       class="w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <p class="text-xs text-gray-500 mt-2">Recommended: Square image, 600x600px or larger. Allowed formats: PNG, JPG, JPEG, GIF, WEBP (Max: 2MB)</p>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex justify-end space-x-4 pt-6">
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-200 flex items-center">
+                                <i class='bx bx-save mr-2'></i> Save About Section
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
